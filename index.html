@@ -66,6 +66,7 @@
     </style>
     <script>
       let symbols = [];
+      let synonyms = { synonym: ['synonym1', 'synonym2'] };
 
       document.addEventListener('DOMContentLoaded', async () => {
         const css = await fetch('SF-Symbols.css').then((response) => response.text());
@@ -78,6 +79,9 @@
             return match ? match[1] : null;
           })
           .filter(Boolean);
+
+        synonyms = await fetch('searchdata.json').then((response) => response.json());
+        console.log('synonyms', synonyms);
 
         symbolsContainer.innerHTML = symbols.map(drawSymbol).join('\n');
 
@@ -114,6 +118,22 @@
           'i',
         );
         const filteredSymbols = symbols.filter((name) => name.toLowerCase().match(regex));
+
+        console.log(filteredSymbols);
+
+        // look for synonyms as well
+        const synonymMatches = Object.entries(synonyms)
+          .reduce((acc, [key, value]) => {
+            if (value.some((syn) => syn.toLowerCase().match(regex))) {
+              acc.push(key);
+            }
+            return acc;
+          }, [])
+          .map((key) => {
+            return key.replace(/\./gi, '-');
+          }).filter((name => symbols.includes(name)));
+
+        filteredSymbols.push(...synonymMatches);
 
         symbolsContainer.innerHTML = filteredSymbols.map(drawSymbol).join('\n');
       };
